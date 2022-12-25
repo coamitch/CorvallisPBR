@@ -1,5 +1,6 @@
 from Utility.QueryLibrary import *
 
-setsDict = getEventSets(828045)
+tournamentDict = dict()
+updateTournamentDict(825260, tournamentDict)
 
-print(setsDict)
+print(tournamentDict)

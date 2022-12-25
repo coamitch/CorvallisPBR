@@ -3,7 +3,7 @@ from graphqlclient import GraphQLClient
 
 from Utility.Constants import *
 
-def getEventSets(eventID, page=1, perPage=100):
+def getEventSets(eventID: int, tournamentDict: dict, page=1, perPage=100):
 	# Creating a graphql client and providing the OSUCorvallisMelee admin auth token
 	client = GraphQLClient('https://api.start.gg/gql/' + apiVersion)
 	client.inject_token('Bearer ' + startGGToken)
@@ -47,8 +47,7 @@ def getEventSets(eventID, page=1, perPage=100):
 
 	# now we need to parse the data into something more usable for future functions
 	# dictionary: 	key - set id,
-	# 				value - tuple (p1 set ID, p1 dict, p2 set ID, p2 dict)
-	setsDict = dict()
+	# 				value - dictionary of set information
 
 	# getting the sets dictionary
 	setsPlayedArry = resultsDict['data']['event']['sets']['nodes']
@@ -59,14 +58,17 @@ def getEventSets(eventID, page=1, perPage=100):
 
 		# getting the players in the set
 		playersArry = node['slots']
+
 		player1SetID = playersArry[0]['id']
 		player1Info = playersArry[0]['entrant']
+		
 		player2SetID = playersArry[1]['id']
 		player2Info = playersArry[1]['entrant']
 
 		# loading the set information into the working dictionary
-		setsDict[setID] = (player1SetID, player1Info, player2SetID, player2Info)
+		tournamentDict.get(setID, dict)
+		tournamentDict[setID]['player1'] = {'setID': player1SetID, 'info': player1Info}
+		tournamentDict[setID]['player2'] = {'setID': player2SetID, 'info': player2Info}
 
-	return setsDict
-
-
+# def getGameCounts(setID):
+#

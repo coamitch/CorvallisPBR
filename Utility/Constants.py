@@ -5,11 +5,11 @@ import Utility.UtilFuncs as uf
 
 # bracket directory paths
 if uf.isWindows():
-	bracketDirPath = f'..\\Brackets\\'
+	shelveDirPath = f'..\\Shelves\\'
 elif uf.isLinux():
-	bracketDirPath = f'../Brackets/'
+	shelveDirPath = f'../Shelves/'
 else:
-	bracketDirPath = None
+	shelveDirPath = None
 
 apiVersion = 'alpha'
 startGGToken = '083f5005592a217264a5f4ec75026e5b'

@@ -15,6 +15,16 @@ class CPBRShell():
 		# self.switch['reset'] =
 
 	# member methods
+	def checkArgs(self, numArgs, args: list):
+		# checking if the args list is the correct length
+		if numArgs == len(args):
+			# if it has the correct number of arguments, return true
+			# the main assumption here is that the arg values are correct
+			return True
+
+		# otherwise there are too few or too many arguments, and we return false
+		return False
+
 	def load(self, args: list):
 		# loads a tournament into the current working tournament slot.
 		# args:	- event id
@@ -33,6 +43,10 @@ class CPBRShell():
 		self.currTournament = tournamentDict
 
 		print(f'\tTournament loaded into working slot.')
+
+	def reset(self):
+		# re-initializes the shell variables to their starting state
+		self.currTournament = None
 
 	def save(self, args: list):
 		# saves (serializes) the current working tournament. file path preset.
@@ -64,23 +78,14 @@ class CPBRShell():
 
 		print(f'\tTournament saved to {shelvePath} under key name "{tournamentKey}".')
 
-	def checkArgs(self, numArgs, args: list):
-		# checking if the args list is the correct length
-		if numArgs == len(args):
-			# if it has the correct number of arguments, return true
-			# the main assumption here is that the arg values are correct
-			return True
-
-		# otherwise there are too few or too many arguments, and we return false
-		return False
-
 if __name__ == '__main__':
 	# creating a basic shell object
 	shellObj = CPBRShell()
 
 	# printing help menu
 	print('Please enter one of the commands below (comma separated):')
-	print('\t- forward(speed, angle, time)')
+	print('\t- load(event ID)')
+	print('\t- save(shelve name, tournament name)')
 
 	print('\n\t- * <--- issues the previous command')
 	print('\t- reset <--- resets all current working variables')

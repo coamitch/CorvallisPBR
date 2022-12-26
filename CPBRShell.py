@@ -1,6 +1,6 @@
 import shelve
 
-from Exceptions import *
+from Utility.Exceptions import *
 from Utility import QueryLibrary as ql
 from Utility import Constants as const
 

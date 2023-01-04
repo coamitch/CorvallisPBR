@@ -9,3 +9,7 @@ class ArgsError(Exception):
 class SaveError(Exception):
 	# raised when there is no file stored to save
 	pass
+
+class EmptyEntryError(Exception):
+	# raised when there is no entry in the shelve/dictionary to return
+	pass

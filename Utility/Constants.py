@@ -3,15 +3,8 @@
 # local file imports
 import Utility.UtilFuncs as uf
 
-# TODO: windows might handle forward slashes properly. should try to eliminate this
-# 	conditional block if possible.
 # bracket directory paths
-if uf.isWindows():
-	shelveDirPath = f'\\Shelves\\'
-elif uf.isLinux():
-	shelveDirPath = f'Shelves/'
-else:
-	shelveDirPath = None
+shelveDirPath = f'Seasons/'
 
 # start gg api constants needed for get requests
 apiVersion = 'alpha'
@@ -20,4 +13,3 @@ ownerID = 'a5893a6f'
 
 # max layer to print down to for a dictionary
 maxLayer = 1
-

@@ -1,6 +1,13 @@
 from Utility.QueryLibrary import *
+from Utility.Constants import *
+from Utility.UtilFuncs import *
 
-tournamentDict = dict()
-updateTournamentDict(825260, tournamentDict)
+# testing constants
+eventID = 828052
+slug = "frt-pnch-frdy-8"
 
-print(tournamentDict)
+queryRslt = retrieveTournament(slug)
+queryDict = unpackTournament(queryRslt)
+
+tabPrint(0, f'unpacked dictionary:')
+dictPrint(1, queryDict, maxLayer=5)

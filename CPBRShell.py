@@ -1,5 +1,6 @@
-import shelve
+# general imports
 
+# local file imports
 from Utility.Exceptions import *
 from Utility import QueryLibrary as ql
 from Utility import Constants as const
@@ -8,18 +9,34 @@ from Utility.UtilFuncs import *
 class CPBRShell():
 	# constructor
 	def __init__(self):
+		# initializing shell variables
 		self.shellVars = dict()
+		self.shellVars['season'] = None
+		self.shellVars['seasonDict'] = None
+		self.shellVars['tournament'] = None
+		self.shellVars['tournamentDict'] = None
+		self.shellVars['event'] = None
+		self.shellVars['eventDict'] = None
+		self.shellVars['player'] = None
+		self.shellVars['playerDict'] = None
 
-		self.switch = dict()
-		self.switch['load_tournament'] = self.loadTournament
-		self.switch['load_shelve'] = self.loadShelve
-		self.switch['save'] = self.save
-		self.switch['reset'] = self.reset
-		self.switch['vars'] = self.printVars
-		self.switch['view_shelve'] = self.viewShelve
+		# initializing shell function switch
+		self.shellSwitch = dict()
+		self.shellSwitch['load'] = self.load
+		self.shellSwitch['save'] = self.save
+		self.shellSwitch['startgg'] = self.loadStartGG
+		self.shellSwitch['reset'] = self.reset
+		self.shellSwitch['vars'] = self.printVars
+
+		# initializing load function switch
+		self.loadSwitch = dict()
+		self.loadSwitch['season'] = self.loadSeason
+		self.loadSwitch['startgg'] = self.loadStartGG
+
+		self.loadSwitch['event'] = self.loadEvent
 
 	# member methods
-	def checkArgs(self, numArgs, args: list):
+	def _checkArgs(self, numArgs, args: list):
 		# checking if the args list is the correct length
 		if numArgs == len(args):
 			# if it has the correct number of arguments, return true
@@ -29,33 +46,38 @@ class CPBRShell():
 		# otherwise there are too few or too many arguments, and we return false
 		return False
 
+	def load(self, args: list):
+		# an interface method to run the correct function based on the first argument in
+		# the list provided.
+
+		#
+
+
 	def loadTournament(self, args: list):
 		# loads a tournament into the current working tournament slot.
 		# args:	- event id
 
 		# checking if we have the correct number of args
-		if not self.checkArgs(1, args):
+		if not self._checkArgs(1, args):
 			raise ArgsError
 
 		# if we have the correct arguments, we unpack them
 		eventID = int(args[0])
 
 		# loading the tournament into a new dictionary
-		tournamentDict, tournamentName, eventName = ql.unpackTournament(eventID)
+		tournamentDict, tournamentName, eventName = ql.unpackEvent(eventID)
 
 		# loading tournament into the shell vars dictionary
 		self.shellVars['tournamentDict'] = tournamentDict
 		self.shellVars['tournamentName'] = tournamentName
 		self.shellVars['eventName'] = eventName
 
+		# printing the variables so the user can see what they loaded
 		self.printVars([])
 
-	def loadShelve(self, args: list):
-		# loads a tournament into the current working tournament slot from the specified
-		# shelve and entries
-		# args:	- shelve name
-		#		- tournament name
-		# 		- event name
+	def loadSeason(self, args: list):
+		# loads a specified into the shell variables
+		# args:	- season binary file
 
 		# checking if we have the correct number of args
 		if not self.checkArgs(3, args):
@@ -94,16 +116,10 @@ class CPBRShell():
 		# args:	- none
 
 		# checking if we have the correct number of args
-		if not self.checkArgs(0, args):
+		if not self._checkArgs(0, args):
 			raise ArgsError
 
-		# otherwise we have the correct number of arguments and we can print the current
-		# working variables
-		for key, value in self.shellVars.items():
-			if isinstance(value, dict):
-				tabPrint(1, f'{key} - # sets played: {len(value.keys())}')
-			else:
-				tabPrint(1, f'{key} - {value}')
+		dictPrint(1, self.shellVars, maxLayer=3)
 
 	def reset(self):
 		# re-initializes the shell variables to their starting state (empty dictionary)
@@ -146,23 +162,7 @@ class CPBRShell():
 		tabPrint(1, f'\tTournament saved to {shelvePath} under key name "{tournamentName}/{eventName}".')
 
 	def viewShelve(self, args: list):
-		# loads a shelve entry into the current working tournament slot.
-		# args:	- shelve name
-
-		# checking if we have the correct number of args
-		if not self.checkArgs(1, args):
-			raise ArgsError
-
-		# if we have the correct arguments, we unpack them
-		shelveName = args[0]
-
-		# opening shelve
-		shelvePath = f'{const.shelveDirPath}{shelveName}'
-		workingShelve = shelve.open(shelvePath)
-
-		dictPrint(1, workingShelve)
-
-		workingShelve.close()
+		pass
 
 if __name__ == '__main__':
 	# creating a basic shell object
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 			done = True
 		else:
 			try:
-				shellObj.switch[func](argsList)
+				shellObj.shellSwitch[func](argsList)
 				prevInputStr = inputStr
 
 				if first:

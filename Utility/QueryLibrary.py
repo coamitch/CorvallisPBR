@@ -3,6 +3,55 @@ from graphqlclient import GraphQLClient
 
 from Utility.Constants import *
 
+def retrieveTournament(tournamentSlug):
+	# Creating a graphql client and providing the OSUCorvallisMelee admin auth token
+	client = GraphQLClient('https://api.start.gg/gql/' + apiVersion)
+	client.inject_token('Bearer ' + startGGToken)
+
+	# building the query, setting arguments, and executing the query
+	queryResult = client.execute('''
+		query TournamentQuery($slug: String!) {
+			tournament(slug: $slug) {
+				id
+				name
+				numAttendees
+				events {
+					id
+				}
+			}
+		}
+		''',
+		{
+			"slug": tournamentSlug
+		})
+
+	# loading the query result into a dictionary for easier parsing
+	return json.loads(queryResult)
+
+def unpackTournament(tournamentQueryRslt: dict):
+	# getting event dictionary result from the query
+	tournamentInfoDict = tournamentQueryRslt['data']['tournament']
+
+	# creating a working dictionary to store the tournament data
+	tournamentDict = dict()
+	
+	# storing general event information
+	tournamentDict['id'] = tournamentInfoDict['id']
+	tournamentDict['name'] = tournamentInfoDict['name']
+	tournamentDict['numAttendees'] = tournamentInfoDict['numAttendees']
+	tournamentDict['events'] = dict()
+
+	# iterating through all the events
+	for event in tournamentInfoDict['events']:
+		# getting the event id
+		eventID = event['id']
+
+		# loading empty event dicts with key = event ID
+		tournamentDict['events'][eventID] = dict()
+
+	# returning the tournament dictionary
+	return tournamentDict
+
 def retrieveEventData(eventID: int, page=1, perPage=100):
 	# Creating a graphql client and providing the OSUCorvallisMelee admin auth token
 	client = GraphQLClient('https://api.start.gg/gql/' + apiVersion)
@@ -10,13 +59,11 @@ def retrieveEventData(eventID: int, page=1, perPage=100):
 	
 	# building the query, setting arguments, and executing the query
 	queryResult = client.execute('''
-	query EventSets($eventId: ID!, $page: Int!, $perPage: Int!) {
+	query EventData($eventId: ID!, $page: Int!, $perPage: Int!) {
 		event(id: $eventId) {
 			id
 			name
-			tournament {
-				name
-			}
+			numEntrants
 			sets(
 				page: $page
 				perPage: $perPage
@@ -27,13 +74,6 @@ def retrieveEventData(eventID: int, page=1, perPage=100):
 				}
 				nodes {
 					id
-					slots {
-						id
-						entrant {
-							id
-							name
-						}
-					}
 				}
 			}
 		}
@@ -47,19 +87,56 @@ def retrieveEventData(eventID: int, page=1, perPage=100):
 	
 	# loading the query result into a dictionary for easier parsing
 	return json.loads(queryResult)
+
+def unpackEvent(eventQueryRslt: dict):
+	# getting event dictionary result from query
+	eventInfoDict = eventQueryRslt['data']['event']
+
+	# creating a working dictionary to store the tournament data
+	eventDict = dict()
+
+	# storing general event information
+	eventDict['id'] = eventInfoDict['id']
+	eventDict['name'] = eventInfoDict['name']
+	eventDict['numEntrants'] = eventInfoDict['numEntrants']
+
+	# storing set information
+	# getting a list of all the sets played 
+	setsPlayedArry = eventInfoDict['sets']['nodes']
 	
-def retrieveGameCount(setID: int):
+	# iterating through all the sets played and storing information
+	for node in setsPlayedArry:
+		# getting the assigned set ID and game counts
+		setID = node['id']
+
+		# retrieving the game counts for the current set ID and unpacking the query result
+		setInfoQueryRslt = retrieveSetInfo(setID)
+		setDict = unpackSetInfo(setInfoQueryRslt)
+
+		# storing the set in the event dictionary with key = set ID
+		eventDict[setID] = setDict
+
+	return eventDict
+
+def retrieveSetInfo(setID: int):
 	# Creating a graphql client and providing the OSUCorvallisMelee admin auth token
 	client = GraphQLClient('https://api.start.gg/gql/' + apiVersion)
 	client.inject_token('Bearer ' + startGGToken)
-	
+
 	# building the query, setting arguments, and executing the query
 	queryResult = client.execute('''
-	query set($setId: ID!) {
+	query SetInfo($setId: ID!) {
 		set(id: $setId) {
 			id
+			round
+			totalGames
+			winnerId
 			slots {
 				id
+				entrant {
+					id
+					name
+				}
 				standing {
 					id
 					placement
@@ -77,56 +154,35 @@ def retrieveGameCount(setID: int):
 	{
 		"setId": setID,
 	})
-	
+
 	return json.loads(queryResult)
 
-def unpackTournament(eventID: int):
-	# getting the event sets associated with the event ID
-	eventData = retrieveEventData(eventID)
-	
-	# getting the sets dictionary
-	setsPlayedArry = eventData['data']['event']['sets']['nodes']
+def unpackSetInfo(setInfoQueryRslt: dict):
+	setInfoDict = setInfoQueryRslt['data']['set']
 
-	# creating a working dictionary to store the tournament data
-	tournamentDict = dict()
+	# creating a working dictionary to store the current set
+	setDict = dict()
 
-	for node in setsPlayedArry:
-		# getting the assigned set ID and game counts
-		setID = node['id']
-		gameCountRslts = retrieveGameCount(setID)
-		workingArry = gameCountRslts['data']['set']['slots']
-		
-		# getting the players in the set
-		playersArry = node['slots']
+	# storing general set information
+	setDict['id'] = setInfoDict['id']
+	setDict['round'] = setInfoDict['round']
+	setDict['totalGames'] = setInfoDict['totalGames']
+	setDict['winnerID'] = setInfoDict['winnerId']
 
-		player1SetID = playersArry[0]['id']
-		player1Info = playersArry[0]['entrant']
-		player1GameCount = workingArry[0]['standing']['stats']['score']['value']
-		
-		player2SetID = playersArry[1]['id']
-		player2Info = playersArry[1]['entrant']
-		player2GameCount = workingArry[1]['standing']['stats']['score']['value']
+	# getting the set slots (players in the set)
+	playersArry = setInfoDict['slots']
 
+	# iterating through the set players and storing their information
+	for i in range(len(playersArry)):
+		# creating a working dictionary to store player information
+		setDict[f'player{i+1}'] = dict()
 
-		# TODO: if the tournament doesn't have a winner then this check has to change
-		# 	ex. fpf8 amateur bracket grand finals 
-		if player1GameCount > player2GameCount:
-			winnerID = player1Info['id']
-		else:
-			winnerID = player2Info['id']
+		# populating the working dictionary
+		setDict[f'player{i+1}']['id'] = playersArry[i]['id']
+		setDict[f'player{i+1}']['entrant'] = playersArry[i]['entrant']
+		setDict[f'player{i+1}']['placement'] = playersArry[i]['standing']['placement']
+		setDict[f'player{i+1}']['gamesWon'] = playersArry[i]['standing']['stats']['score']['value']
 
-		# creating a working dictionary to store the current set
-		setDict = dict()
-		
-		# loading the information into the working dictionary
-		setDict['player1'] = {'setID': player1SetID, 'playerInfo': player1Info, 'gamesWon': player1GameCount}
-		setDict['player2'] = {'setID': player2SetID, 'playerInfo': player2Info, 'gamesWon': player2GameCount}
-		setDict['winnerID'] = winnerID
+	# returning the populated set dictionary
+	return setDict
 
-		tournamentDict[setID] = setDict
-		
-	# saving the event and tournament names
-	tournamentName = eventData['data']['event']['tournament']['name']
-	eventName = eventData['data']['event']['name']
-
-	return tournamentDict, tournamentName, eventName

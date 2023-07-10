@@ -1,7 +1,9 @@
 # general imports
 
-# bracket directory paths
-shelveDirPath = f'Seasons/'
+# saved data directory paths
+pickleDirPath = f'CPBRData/'
+pickleExt = '.cpbr'
+vaxCheckFileName = 'VaxedPlayers' + pickleExt
 
 # start gg api constants needed for get requests
 apiVersion = 'alpha'

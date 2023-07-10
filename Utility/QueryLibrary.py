@@ -3,6 +3,16 @@ from graphqlclient import GraphQLClient
 
 from Utility.Constants import *
 
+def convertToSlug(tournamentName: str):
+	# converts the given tournament name into a slug readable by start.gg
+	# first we convert evertying to lower case
+	slug = tournamentName.lower()
+	
+	# now we change the spaces in the name to dashes
+	slug = slug.replace(' ', '-')
+	
+	return slug
+
 def retrieveTournament(tournamentSlug):
 	# Creating a graphql client and providing the OSUCorvallisMelee admin auth token
 	client = GraphQLClient('https://api.start.gg/gql/' + apiVersion)
@@ -186,3 +196,52 @@ def unpackSetInfo(setInfoQueryRslt: dict):
 	# returning the populated set dictionary
 	return setDict
 
+def retrieveAttendees(tournamentSlug):
+	# Creating a graphql client and providing the OSUCorvallisMelee admin auth token
+	client = GraphQLClient('https://api.start.gg/gql/' + apiVersion)
+	client.inject_token('Bearer ' + startGGToken)
+
+	# building the query, setting arguments, and executing the query
+	queryResult = client.execute('''
+		query TournamentQuery($slug: String!) {
+			tournament(slug: $slug) {
+				id
+				name
+				numAttendees
+				participants(query: {}) {
+					nodes {
+						id
+						gamerTag
+					}
+				}
+			}
+		}
+		''',
+		{
+			"slug": tournamentSlug
+		})
+
+	# loading the query result into a dictionary for easier parsing
+	return json.loads(queryResult)
+
+def unpackAttendees(attendeesQueryRslt: dict):
+	# creating a dictionary to hold the participant info
+	participantsDict = dict()
+
+	# loading the dictionary with general information about the tournament
+	participantsDict['tournamentID'] = attendeesQueryRslt['data']['tournament']['id']
+	participantsDict['tournamentName'] = attendeesQueryRslt['data']['tournament']['name']
+	participantsDict['numAttendees'] = attendeesQueryRslt['data']['tournament']['numAttendees']
+	participantsDict['participants'] = dict()
+
+	# getting the participants dictionary from the query results dictionary
+	nodes = attendeesQueryRslt['data']['tournament']['participants']['nodes']
+
+	for node in nodes:
+		# for each of the entrants,
+		participantsDict['participants'][node['id']] = node['gamerTag']
+
+	return participantsDict
+
+def addEntrant(eventID: int, playerID: int):
+	

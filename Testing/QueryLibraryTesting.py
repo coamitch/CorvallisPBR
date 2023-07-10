@@ -6,8 +6,8 @@ from Utility.UtilFuncs import *
 eventID = 828052
 slug = "frt-pnch-frdy-8"
 
-queryRslt = retrieveTournament(slug)
-queryDict = unpackTournament(queryRslt)
+queryRslt = retrieveAttendees(slug)
+queryDict = unpackAttendees(queryRslt)
 
 tabPrint(0, f'unpacked dictionary:')
 dictPrint(1, queryDict, maxLayer=5)
